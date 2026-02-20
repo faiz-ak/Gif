@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giffy Pro Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background: #020617; 
+            color: #f8fafc; 
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .brand-gradient {
+            background: linear-gradient(90deg, #22c55e, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .glass-input { 
+            background: rgba(2, 6, 23, 0.8); 
+            border: 1px solid rgba(34, 197, 94, 0.3); 
+            outline: none;
+            transition: 0.2s;
+        }
+        
+        .glass-input:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+        }
+
+        .mode-btn.active { 
+            background: linear-gradient(135deg, #22c55e, #16a34a) !important; 
+            color: #020617 !important;
+            box-shadow: 0 8px 15px rgba(34, 197, 94, 0.3);
+        }
+        
+        .speed-btn.active { 
+            background: #22c55e !important; 
+            color: #020617 !important; 
+        }
+
+        .sizing-btn.active, .ratio-btn.active {
+            border-color: #22c55e !important;
+            color: #22c55e !important;
+            background: rgba(34, 197, 94, 0.1) !important;
+        }
+
+        #sortContainer::-webkit-scrollbar { width: 5px; }
+        #sortContainer::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 10px; }
+
+        .brand-btn {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #020617;
+            transition: all 0.3s ease;
+        }
+        .brand-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .floating-studio-wrapper {
+            position: fixed;
+            right: 5px;  
+            bottom: 20px;   
+            width: 120px; 
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            z-index: 9999;
+        }
+
+        .circular-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            animation: rotateText 20s linear infinite;
+            pointer-events: none;
+        }
+
+        .studio-icon-button {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes rotateText {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .floating-studio-wrapper { right: 15px; bottom: 15px; width: 100px; height: 100px; }
+            .studio-icon-button { width: 50px; height: 50px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-4 space-y-6">
+            <div class="glass-card p-6 rounded-[2rem] shadow-2xl">
+                <h1 class="text-2xl font-black mb-6 tracking-tighter brand-gradient">
+                    GIFFY PRO STUDIO ✨
+                </h1>
+
+                <div class="grid grid-cols-3 gap-2 mb-8">
+                    <button onclick="setMode('photo', this)" class="mode-btn active py-3 text-[10px] bg-slate-900 text-slate-400 rounded-xl font-bold uppercase transition-all">Photos</button>
+                    <button onclick="setMode('gif', this)" class="mode-btn py-3 text-[10px] bg-slate-900 text-slate-400 rounded-xl font-bold uppercase transition-all">Merge GIFs</button>
+                    <button onclick="setMode('video', this)" class="mode-btn py-3 text-[10px] bg-slate-900 text-slate-400 rounded-xl font-bold uppercase transition-all">Video</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <label id="uploadBox" class="block w-full py-10 bg-slate-950/50 hover:bg-slate-900/50 rounded-2xl cursor-pointer border-2 border-dashed border-emerald-500/30 text-center transition-all group">
+                        <span id="uploadText" class="text-emerald-400 font-bold block group-hover:text-emerald-300 uppercase tracking-wide">Upload Photos</span>
+                        <input type="file" id="fileInput" multiple accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                    </label>
+
+                    <div id="sortArea" class="hidden">
+                        <label class="text-[10px] text-slate-500 uppercase font-black block mb-2 text-center tracking-widest">Timeline Order</label>
+                        <div id="sortContainer" class="grid grid-cols-4 gap-2 p-2 bg-black rounded-2xl border border-emerald-500/20 max-h-[300px] overflow-y-auto"></div>
+                    </div>
+
+                    <div id="sizingSection" class="p-4 bg-black/40 rounded-xl border border-white/5">
+                        <label class="text-[10px] text-slate-500 uppercase font-black block mb-3">Sizing Method</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setSizing('auto', this)" class="sizing-btn active py-2 text-[10px] bg-slate-900 text-slate-400 rounded-lg font-bold transition-all border border-transparent">Auto Center</button>
+                            <button onclick="setSizing('manual', this)" class="sizing-btn py-2 text-[10px] bg-slate-900 text-slate-400 rounded-lg font-bold transition-all border border-transparent">Manual Crop</button>
+                        </div>
+                    </div>
+
+                    <div id="textSection" class="p-4 bg-black/40 rounded-xl border border-white/5">
+                        <label class="text-[10px] text-slate-500 uppercase font-black block mb-3">Text Overlay</label>
+                        <input type="text" id="overlayText" placeholder="Enter caption..." class="w-full glass-input rounded-lg p-2 text-xs mb-3 text-white">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="flex items-center gap-2 glass-input p-2 rounded-lg">
+                                <input type="color" id="textColor" value="#ffffff" class="bg-transparent w-6 h-6 cursor-pointer">
+                                <span class="text-[9px] text-slate-400 uppercase">Color</span>
+                            </div>
+                            <select id="textSize" class="glass-input rounded-lg p-2 text-[10px] text-white">
+                                <option value="20">Small</option>
+                                <option value="40" selected>Medium</option>
+                                <option value="70">Large</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="speedSection" class="p-4 bg-black/40 rounded-xl border border-white/5">
+                        <label class="text-[10px] text-slate-500 uppercase font-black block mb-3">Frame Speed</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button onclick="setSpeed(0.5, this)" class="speed-btn py-2 text-[10px] bg-slate-900 rounded-lg text-slate-400">0.5x</button>
+                            <button onclick="setSpeed(1, this)" class="speed-btn active py-2 text-[10px] rounded-lg">1x</button>
+                            <button onclick="setSpeed(1.5, this)" class="speed-btn py-2 text-[10px] bg-slate-900 rounded-lg text-slate-400">1.5x</button>
+                            <button onclick="setSpeed(2, this)" class="speed-btn py-2 text-[10px] bg-slate-900 rounded-lg text-slate-400">2x</button>
+                        </div>
+                        <input type="hidden" id="speed" value="1">
+                    </div>
+
+                    <button onclick="handleProcess()" class="w-full py-5 brand-btn rounded-2xl font-black uppercase tracking-widest shadow-xl transform active:scale-95 transition-all">Build Animation</button>
+                    <button onclick="clearAll(true)" class="w-full py-2 text-[10px] text-slate-500 font-bold uppercase hover:text-red-400 transition-colors">Clear Workspace</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8">
+            <div class="glass-card p-6 rounded-[2rem] h-full flex flex-col min-h-[600px] backdrop-blur-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Output Preview</h3>
+                    <div id="statusIndicator" class="hidden flex items-center gap-2">
+                        <span class="animate-ping h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span class="text-[10px] font-bold text-emerald-400 uppercase">Processing...</span>
+                    </div>
+                </div>
+                <div id="previewBox" class="flex-grow w-full bg-black/40 rounded-[2rem] flex items-center justify-center border border-white/5 overflow-hidden shadow-inner">
+                    <p class="text-slate-600 font-bold uppercase text-[10px] tracking-widest text-center px-10">Upload files to get started</p>
+                </div>
+                <div class="mt-8 flex justify-center">
+                    <a id="downloadBtn" class="hidden px-14 py-5 brand-btn rounded-2xl font-black text-white uppercase tracking-tighter shadow-2xl transition-all hover:-translate-y-1">Download GIF</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cropModal" class="fixed inset-0 bg-black/95 hidden z-50 flex items-center justify-center p-4 md:p-10 backdrop-blur-xl">
+        <div class="glass-card rounded-[3rem] max-w-4xl w-full border border-emerald-500/20 shadow-2xl flex flex-col max-h-screen">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center">
+                <h3 class="font-black text-xl uppercase italic tracking-tight brand-gradient">Manual Crop <span id="imgIndex" class="text-white">1</span></h3>
+                <button onclick="closeCropModal(true)" class="text-slate-400 hover:text-white bg-slate-900 p-2 rounded-full transition-all hover:scale-110">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="bg-black/50 p-4 border-b border-white/5 flex flex-wrap gap-2 items-center justify-center">
+                <button onclick="changeCropRatio(1, this)" class="ratio-btn px-4 py-2 bg-slate-900 rounded-lg text-[10px] font-bold uppercase active">1:1</button>
+                <button onclick="changeCropRatio(1.777, this)" class="ratio-btn px-4 py-2 bg-slate-900 rounded-lg text-[10px] font-bold uppercase">16:9</button>
+                <button onclick="changeCropRatio(0.562, this)" class="ratio-btn px-4 py-2 bg-slate-900 rounded-lg text-[10px] font-bold uppercase">9:16</button>
+                <button onclick="changeCropRatio(NaN, this)" class="ratio-btn px-4 py-2 bg-slate-900 rounded-lg text-[10px] font-bold uppercase">Free</button>
+            </div>
+
+            <div class="flex-grow relative bg-black overflow-hidden flex items-center justify-center">
+                <img id="cropImage" src="" class="max-w-full block">
+            </div>
+
+            <div class="p-6 border-t border-white/5 flex items-center justify-between gap-4">
+                <div id="stepCounter" class="text-slate-500 font-black text-xs uppercase tracking-widest">Frame <span class="text-white">1</span> / 0</div>
+                <div class="flex gap-3">
+                    <button onclick="bulkApplyCrop()" class="px-6 py-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-xl font-bold uppercase text-[10px]">Apply to All</button>
+                    <button onclick="nextCrop()" id="nextBtn" class="px-8 py-3 brand-btn rounded-xl font-black text-white uppercase text-[10px] tracking-widest">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let cropResults = [];
+        let currentIndex = 0;
+        let cropper = null;
+        let currentMode = 'photo';
+        let sizingMethod = 'auto';
+        let activeRatio = 1;
+        let sortable = null;
+
+        const modeLabels = { 'photo': 'Upload Photos', 'gif': 'Upload GIFs', 'video': 'Upload Videos' };
+
+        function setMode(mode, btn) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            document.getElementById('uploadText').innerText = modeLabels[mode];
+            document.getElementById('sizingSection').classList.toggle('hidden', mode !== 'photo');
+            
+            const input = document.getElementById('fileInput');
+            input.accept = mode === 'video' ? "video/*" : (mode === 'gif' ? "image/gif" : "image/*");
+            input.multiple = mode !== 'video';
+            clearAll(false);
+        }
+
+        function setSizing(method, btn) {
+            sizingMethod = method;
+            document.querySelectorAll('.sizing-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function handleFileSelect(e) {
+            const newFiles = Array.from(e.target.files);
+            selectedFiles = [...selectedFiles, ...newFiles];
+            renderThumbnails();
+            e.target.value = "";
+        }
+
+        function renderThumbnails() {
+            const container = document.getElementById('sortContainer');
+            if (!selectedFiles.length) {
+                document.getElementById('sortArea').classList.add('hidden');
+                document.getElementById('uploadText').innerText = modeLabels[currentMode];
+                return;
+            }
+            document.getElementById('sortArea').classList.remove('hidden');
+            document.getElementById('uploadText').innerText = `${selectedFiles.length} File(s) Selected`;
+            container.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = "file-card aspect-square relative bg-slate-900 rounded-xl overflow-hidden border border-white/5 cursor-move group hover:border-emerald-500/50 transition-all";
+                div.setAttribute('data-id', index);
+                
+                const isImg = file.type.startsWith('image/');
+                div.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-center">
+                        ${isImg ? `<img src="${URL.createObjectURL(file)}" class="w-full h-full object-cover">` : `<div class="text-[8px] p-1 text-slate-500 break-all">${file.name}</div>`}
+                    </div>
+                    <button onclick="removeImage(${index})" class="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 rounded-bl-lg text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 z-20 transition-opacity">✕</button>
+                `;
+                container.appendChild(div);
+            });
+
+            const addBtn = document.createElement('div');
+            addBtn.className = "aspect-square flex items-center justify-center border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:bg-slate-900 group";
+            addBtn.innerHTML = `<span class="text-2xl text-slate-600 group-hover:text-emerald-500">+</span>`;
+            addBtn.onclick = () => document.getElementById('fileInput').click();
+            container.appendChild(addBtn);
+
+            if (sortable) sortable.destroy();
+            sortable = new Sortable(container, {
+                animation: 250, draggable: ".file-card",
+                onEnd: () => {
+                    const order = Array.from(container.querySelectorAll('.file-card')).map(c => parseInt(c.getAttribute('data-id')));
+                    selectedFiles = order.map(idx => selectedFiles[idx]);
+                    renderThumbnails();
+                }
+            });
+        }
+
+        function removeImage(index) { selectedFiles.splice(index, 1); renderThumbnails(); }
+        
+        function setSpeed(m, btn) {
+            document.getElementById('speed').value = m;
+            document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function handleProcess() {
+            if (!selectedFiles.length) return alert("Please upload some files first.");
+            if (currentMode === 'photo' && sizingMethod === 'manual') {
+                currentIndex = 0; cropResults = []; showCropModal();
+            } else sendToServer([]);
+        }
+
+        function showCropModal() {
+            document.getElementById('cropModal').classList.remove('hidden');
+            document.getElementById('imgIndex').innerText = currentIndex + 1;
+            document.getElementById('stepCounter').innerHTML = `Frame <span class="text-white">${currentIndex + 1}</span> / ${selectedFiles.length}`;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById('cropImage');
+                img.src = e.target.result;
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(img, { aspectRatio: activeRatio, viewMode: 1, autoCropArea: 1, background: false });
+            };
+            reader.readAsDataURL(selectedFiles[currentIndex]);
+        }
+
+        function changeCropRatio(r, btn) {
+            activeRatio = r;
+            document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (cropper) cropper.setAspectRatio(r);
+        }
+
+        function closeCropModal(force = false) {
+            if(force && !confirm("Cancel current editing?")) return;
+            document.getElementById('cropModal').classList.add('hidden');
+            if (cropper) cropper.destroy();
+        }
+
+        async function nextCrop() {
+            const d = cropper.getData();
+            cropResults.push({ x: Math.round(d.x), y: Math.round(d.y), width: Math.round(d.width), height: Math.round(d.height) });
+            currentIndex++;
+            if (currentIndex < selectedFiles.length) showCropModal();
+            else { closeCropModal(); sendToServer(cropResults); }
+        }
+
+        async function bulkApplyCrop() {
+            const d = cropper.getData();
+            const result = { x: Math.round(d.x), y: Math.round(d.y), width: Math.round(d.width), height: Math.round(d.height) };
+            while(cropResults.length < selectedFiles.length) { cropResults.push(result); }
+            closeCropModal();
+            sendToServer(cropResults);
+        }
+
+        async function sendToServer(crops) {
+            const preview = document.getElementById('previewBox');
+            const status = document.getElementById('statusIndicator');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            status.classList.remove('hidden');
+            preview.innerHTML = `<div class="flex flex-col items-center gap-4"><div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div><p class="text-emerald-400 font-bold text-[10px] tracking-widest">GENERATING...</p></div>`;
+            
+            const formData = new FormData();
+            selectedFiles.forEach(f => formData.append('files', f));
+            formData.append('mode', currentMode);
+            formData.append('crops', JSON.stringify(crops));
+            formData.append('duration', document.getElementById('speed').value);
+            formData.append('overlay_text', document.getElementById('overlayText').value);
+            formData.append('text_color', document.getElementById('textColor').value);
+            formData.append('text_size', document.getElementById('textSize').value);
+
+            try {
+               const res = await fetch('/generate', { method: 'POST', body: formData });
+                if(!res.ok) throw new Error("Processing failed");
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                preview.innerHTML = `<img src="${url}" class="max-h-[500px] rounded-2xl shadow-2xl">`;
+                downloadBtn.href = url; downloadBtn.download = "studio_result.gif";
+                downloadBtn.classList.remove('hidden');
+            } catch (err) { 
+                preview.innerHTML = `<p class="text-red-500 font-bold uppercase text-xs">Error Processing Animation</p>`; 
+            }
+            finally { status.classList.add('hidden'); }
+        }
+
+        function clearAll(c) {
+            if(c && !confirm("Are you sure you want to clear the workspace?")) return;
+            selectedFiles = [];
+            document.getElementById('sortArea').classList.add('hidden');
+            document.getElementById('downloadBtn').classList.add('hidden');
+            document.getElementById('previewBox').innerHTML = `<p class="text-slate-600 font-bold uppercase text-[10px] tracking-widest text-center px-10">Upload files to get started</p>`;
+            document.getElementById('uploadText').innerText = modeLabels[currentMode];
+        }
+    </script>
+
+    <a href="https://giffyadm.netlify.app/giffy" class="floating-studio-wrapper">
+        <div class="circular-text">
+            <svg viewBox="0 0 100 100">
+                <path id="circlePath" d="M 50, 50 m -43, 0 a 43,43 0 1,1 86,0 a 43,43 0 1,1 -86,0" fill="transparent" />
+                <text fill="#22c55e" font-size="7" font-weight="800" letter-spacing="1.2">
+                    <textPath xlink:href="#circlePath">GIFFY PRO STUDIO • CREATE • EDIT • SHARE • </textPath>
+                </text>
+            </svg>
+        </div>
+        <div class="studio-icon-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+        </div>
+    </a>
+</body>
+</html>
