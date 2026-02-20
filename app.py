@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import gc
 import numpy as np
+import serverless_wsgi # Add this
 
 # MoviePy 2.0+ Imports
 from moviepy import VideoFileClip, concatenate_videoclips
@@ -42,6 +43,8 @@ def index():
 
 @app.route('/generate', methods=['POST'])
 def generate_gif():
+    # IMPORTANT: Use /tmp for all file operations on Netlify
+    session_dir = tempfile.mkdtemp(dir="/tmp")
     mode = request.form.get('mode')
     speed_multiplier = float(request.form.get('duration', 1.0))
     overlay_text = request.form.get('overlay_text', '')
@@ -121,4 +124,5 @@ def generate_gif():
         shutil.rmtree(session_dir, ignore_errors=True)
 
 if __name__ == '__main__':
+
     app.run(debug=True, threaded=False)
