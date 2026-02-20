@@ -1,3 +1,5 @@
 flask
 flask-cors
 serverless-wsgi
+Pillow
+numpy
