@@ -39,7 +39,7 @@ def index():
 
 # ---------------- GENERATE ---------------- #
 @app.route("/generate", methods=["POST"])
-@app.route("/api/generate", methods=["POST"])  # supports both local + netlify
+@app.route("/api/generate", methods=["POST"])
 def generate_gif():
 
     mode = request.form.get("mode")
@@ -47,7 +47,9 @@ def generate_gif():
     overlay_text = request.form.get("overlay_text", "")
     text_color = request.form.get("text_color", "#ffffff")
     text_size = request.form.get("text_size", "40")
-    uploaded_files = request.files.getlist("files")
+
+    # 👇 THIS LINE FIXES NETLIFY UPLOAD BUG
+    uploaded_files = request.files.getlist("files") or list(request.files.values())
 
     if not uploaded_files:
         return "No files received", 400

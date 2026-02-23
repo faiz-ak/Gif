@@ -1,9 +1,10 @@
 import sys, os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app
-from serverless_wsgi import handle
+import serverless_wsgi
 
 
 def handler(event, context):
-    return handle(app, event, context)
+    return serverless_wsgi.handle_request(app, event, context)
