@@ -5,16 +5,20 @@
 [functions]
   directory = "netlify/functions"
 
+# ---------- API ROUTES FIRST ----------
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/app"
   status = 200
+  force = true
 
+# ---------- STATIC HOME ----------
 [[redirects]]
   from = "/"
   to = "/templates/index.html"
   status = 200
 
+# ---------- FALLBACK LAST ----------
 [[redirects]]
   from = "/*"
   to = "/templates/index.html"
