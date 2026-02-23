@@ -5,12 +5,20 @@
 [functions]
   directory = "netlify/functions"
 
+# API routes
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/app/:splat"
   status = 200
 
+# Serve index from templates folder
+[[redirects]]
+  from = "/"
+  to = "/templates/index.html"
+  status = 200
+
+# SPA fallback
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/templates/index.html"
   status = 200
