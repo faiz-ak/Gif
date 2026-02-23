@@ -4,6 +4,8 @@
 
 [functions]
   directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["templates/**"]
 
 [[redirects]]
   from = "/api/*"
