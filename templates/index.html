@@ -390,7 +390,15 @@
             formData.append('text_size', document.getElementById('textSize').value);
 
             try {
-              const res = await fetch('/generate', { method: 'POST', body: formData });
+            const API_URL =
+            location.hostname === "localhost" || location.hostname === "127.0.0.1"
+                ? "/generate"
+                : "/api/generate";
+
+           const res = await fetch(API_URL, {
+                                     method: "POST",
+                                     body: formData
+                });
                 if(!res.ok) throw new Error("Processing failed");
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);

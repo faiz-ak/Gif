@@ -6,7 +6,6 @@ import numpy as np
 from moviepy import VideoFileClip, concatenate_videoclips, ImageSequenceClip
 import moviepy.video.fx as vfx
 
-
 app = Flask(__name__, template_folder="../../templates")
 
 
@@ -26,10 +25,7 @@ def add_text_to_image(img, text, color, size):
     bbox = draw.textbbox((0, 0), text, font=font)
     tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-    # shadow
     draw.text(((w - tw) / 2 + 2, h - th - 38), text, font=font, fill="black")
-
-    # main text
     draw.text(((w - tw) / 2, h - th - 40), text, font=font, fill=color)
 
     return img
@@ -43,6 +39,7 @@ def index():
 
 # ---------------- GENERATE ---------------- #
 @app.route("/generate", methods=["POST"])
+@app.route("/api/generate", methods=["POST"])  # supports both local + netlify
 def generate_gif():
 
     mode = request.form.get("mode")
@@ -59,9 +56,7 @@ def generate_gif():
 
     try:
 
-        # =========================================================
-        # PHOTO MODE
-        # =========================================================
+        # ================= PHOTO MODE =================
         if mode == "photo":
 
             crops = json.loads(request.form.get("crops", "[]"))
@@ -96,27 +91,19 @@ def generate_gif():
             out.seek(0)
             return send_file(out, mimetype="image/gif")
 
-
-        # =========================================================
-        # GIF / VIDEO MODE
-        # =========================================================
+        # ================= GIF / VIDEO MODE =================
         clips = []
 
         for i, file in enumerate(uploaded_files):
 
-            ext = os.path.splitext(file.filename)[1] or (
-                ".gif" if mode == "gif" else ".mp4"
-            )
-
+            ext = os.path.splitext(file.filename)[1] or (".gif" if mode == "gif" else ".mp4")
             path = os.path.join(session_dir, f"input_{i}{ext}")
             file.save(path)
 
-            # -------- GIF INPUT --------
+            # GIF handling
             if mode == "gif":
-
                 gif = Image.open(path)
                 frames = []
-
                 try:
                     while True:
                         frames.append(np.array(gif.copy().convert("RGB")))
@@ -126,15 +113,12 @@ def generate_gif():
 
                 clip = ImageSequenceClip(frames, fps=10)
 
-            # -------- VIDEO INPUT --------
             else:
                 clip = VideoFileClip(path)
 
-            # -------- SPEED --------
             if speed_multiplier != 1.0:
                 clip = clip.with_effects([vfx.MultiplySpeed(speed_multiplier)])
 
-            # -------- TEXT --------
             if overlay_text:
                 clip = clip.transform(
                     lambda get_frame, t: np.array(
@@ -149,11 +133,9 @@ def generate_gif():
 
             clips.append(clip)
 
-        # -------- CONCAT --------
         final_clip = concatenate_videoclips(clips, method="compose")
 
         output_path = os.path.join(session_dir, "output.gif")
-
         final_clip.write_gif(output_path, fps=12, logger=None)
 
         final_clip.close()

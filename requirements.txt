@@ -3,5 +3,6 @@ flask-cors
 serverless-wsgi
 Pillow
 numpy
+moviepy
 imageio
 imageio-ffmpeg
