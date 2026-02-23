@@ -4,12 +4,10 @@
 
 [functions]
   directory = "netlify/functions"
-  node_bundler = "esbuild"
-  included_files = ["templates/**"]
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/app/:splat"
+  to = "/.netlify/functions/app"
   status = 200
 
 [[redirects]]
